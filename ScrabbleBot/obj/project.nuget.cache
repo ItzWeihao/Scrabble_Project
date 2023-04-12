@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "CG4uJZs+Kk2X+LbvC2wYNF6tvaff/JlAYSfvBdn60xw7p5IdBD0yBQoKOxNe1cAmXJdKjuxXU8Gn3YX7vNwYcA==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\weiha\\OneDrive - ITU\\4. Semester\\Functional Programming\\Scrabble_Project\\ScrabbleBot\\ScrabbleBot.fsproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\weiha\\.nuget\\packages\\fparsec\\1.1.1\\fparsec.1.1.1.nupkg.sha512",
+    "C:\\Users\\weiha\\.nuget\\packages\\fsharp.core\\7.0.200\\fsharp.core.7.0.200.nupkg.sha512"
+  ],
+  "logs": []
+}

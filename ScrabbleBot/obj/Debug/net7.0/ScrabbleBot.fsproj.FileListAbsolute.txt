@@ -1,0 +1,13 @@
+C:\Users\weiha\OneDrive - ITU\4. Semester\Functional Programming\Scrabble_Project\ScrabbleBot\bin\Debug\net7.0\ScrabbleBot.deps.json
+C:\Users\weiha\OneDrive - ITU\4. Semester\Functional Programming\Scrabble_Project\ScrabbleBot\bin\Debug\net7.0\ScrabbleBot.dll
+C:\Users\weiha\OneDrive - ITU\4. Semester\Functional Programming\Scrabble_Project\ScrabbleBot\bin\Debug\net7.0\ScrabbleBot.pdb
+C:\Users\weiha\OneDrive - ITU\4. Semester\Functional Programming\Scrabble_Project\ScrabbleBot\bin\Debug\net7.0\ScrabbleUtil.dll
+C:\Users\weiha\OneDrive - ITU\4. Semester\Functional Programming\Scrabble_Project\ScrabbleBot\obj\Debug\net7.0\ScrabbleBot.fsproj.AssemblyReference.cache
+C:\Users\weiha\OneDrive - ITU\4. Semester\Functional Programming\Scrabble_Project\ScrabbleBot\obj\Debug\net7.0\ScrabbleBot.AssemblyInfoInputs.cache
+C:\Users\weiha\OneDrive - ITU\4. Semester\Functional Programming\Scrabble_Project\ScrabbleBot\obj\Debug\net7.0\ScrabbleBot.AssemblyInfo.fs
+C:\Users\weiha\OneDrive - ITU\4. Semester\Functional Programming\Scrabble_Project\ScrabbleBot\obj\Debug\net7.0\ScrabbleBot.fsproj.CoreCompileInputs.cache
+C:\Users\weiha\OneDrive - ITU\4. Semester\Functional Programming\Scrabble_Project\ScrabbleBot\obj\Debug\net7.0\ScrabbleBot.fsproj.CopyComplete
+C:\Users\weiha\OneDrive - ITU\4. Semester\Functional Programming\Scrabble_Project\ScrabbleBot\obj\Debug\net7.0\ScrabbleBot.dll
+C:\Users\weiha\OneDrive - ITU\4. Semester\Functional Programming\Scrabble_Project\ScrabbleBot\obj\Debug\net7.0\refint\ScrabbleBot.dll
+C:\Users\weiha\OneDrive - ITU\4. Semester\Functional Programming\Scrabble_Project\ScrabbleBot\obj\Debug\net7.0\ScrabbleBot.pdb
+C:\Users\weiha\OneDrive - ITU\4. Semester\Functional Programming\Scrabble_Project\ScrabbleBot\obj\Debug\net7.0\ref\ScrabbleBot.dll
