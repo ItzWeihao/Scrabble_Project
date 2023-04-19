@@ -131,4 +131,15 @@ module internal Parser
     }
     
     // Default (unusable) board in case you are not implementing a parser for the DSL.
-    let mkBoard : boardProg -> board = fun _ -> {center = (0,0); defaultSquare = Map.empty; squares = fun _ -> Success (Some Map.empty)}
+    let parseSquareProg sqp : square = sqp |> Map.map (fun _ v -> run stmntParse v |> getSuccess |> stmntToSquareFun)
+    let parseBoardProg = run stmntParse >> getSuccess >> stmntToBoardFun
+    let mkBoard (bp : boardProg) =
+        {
+            center = bp.center
+            defaultSquare =  Map.find bp.usedSquare bp.squares |> parseSquareProg
+            squares =
+                let m' = Map.map (fun _ -> parseSquareProg) bp.squares
+                parseBoardProg bp.prog m'
+        }
+    
+    // let mkBoard : boardProg -> board = fun _ -> {center = (0,0); defaultSquare = Map.empty; squares = fun _ -> Success (Some Map.empty)}
