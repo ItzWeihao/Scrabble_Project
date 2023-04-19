@@ -1,4 +1,5 @@
-﻿module Dictionary
+﻿namespace CatSquish
+module Dictionary =
     open System
     open System.Collections.Generic
     type Dict =

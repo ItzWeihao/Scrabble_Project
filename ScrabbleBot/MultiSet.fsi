@@ -1,6 +1,7 @@
 ﻿// Insert your MultiSet.fsi file here. All modules must be internal
+namespace CatSquish
 
-module internal MultiSet
+module internal MultiSet =
     type MultiSet<'a when 'a : comparison>
     
     val empty : MultiSet<'a>

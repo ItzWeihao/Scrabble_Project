@@ -7,7 +7,24 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="453b20ad-bf55-4e9a-9312-75325b2fdd4a" name="Changes" comment="" />
+    <list default="true" id="453b20ad-bf55-4e9a-9312-75325b2fdd4a" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.ScrabbleTemplate/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ScrabbleTemplate/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ScrabbleBot/Dictionary.fs" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleBot/Dictionary.fs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ScrabbleBot/Dictionary.fsi" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleBot/Dictionary.fsi" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ScrabbleBot/MultiSet.fs" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleBot/MultiSet.fs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ScrabbleBot/MultiSet.fsi" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleBot/MultiSet.fsi" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ScrabbleBot/Parser.fs" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleBot/Parser.fs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ScrabbleBot/Scrabble.fs" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleBot/Scrabble.fs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ScrabbleBot/bin/Debug/net7.0/ScrabbleBot.dll" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleBot/bin/Debug/net7.0/ScrabbleBot.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ScrabbleBot/bin/Debug/net7.0/ScrabbleBot.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleBot/bin/Debug/net7.0/ScrabbleBot.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ScrabbleBot/obj/Debug/net7.0/ScrabbleBot.dll" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleBot/obj/Debug/net7.0/ScrabbleBot.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ScrabbleBot/obj/Debug/net7.0/ScrabbleBot.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleBot/obj/Debug/net7.0/ScrabbleBot.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ScrabbleBot/obj/Debug/net7.0/ref/ScrabbleBot.dll" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleBot/obj/Debug/net7.0/ref/ScrabbleBot.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ScrabbleBot/obj/Debug/net7.0/refint/ScrabbleBot.dll" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleBot/obj/Debug/net7.0/refint/ScrabbleBot.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ScrabbleTemplate/bin/Debug/net7.0/ScrabbleBot.dll" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleTemplate/bin/Debug/net7.0/ScrabbleBot.dll" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ScrabbleTemplate/bin/Debug/net7.0/ScrabbleBot.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleTemplate/bin/Debug/net7.0/ScrabbleBot.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ScrabbleTemplate/obj/Debug/net7.0/ScrabbleTemplate.fsproj.AssemblyReference.cache" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleTemplate/obj/Debug/net7.0/ScrabbleTemplate.fsproj.AssemblyReference.cache" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -94,7 +111,7 @@
       <workItem from="1681286060352" duration="6315000" />
       <workItem from="1681894720050" duration="96000" />
       <workItem from="1681894838317" duration="1896000" />
-      <workItem from="1681899489966" duration="5025000" />
+      <workItem from="1681899489966" duration="10546000" />
     </task>
     <servers />
   </component>

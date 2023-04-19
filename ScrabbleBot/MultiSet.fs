@@ -1,6 +1,7 @@
 ﻿// Insert your MultiSet.fs file here. All modules must be internal
+namespace CatSquish
 
-module internal MultiSet
+module internal MultiSet =
     type MultiSet<'a when 'a : comparison> = MS of Map<'a, uint32>
     
     // Creates an empty multiset
@@ -33,7 +34,7 @@ module internal MultiSet
         else MS (s.Remove a)
     
     // Given an element a and multiset s, it removes a from s 1 time
-    let removeSingle a (s : MultiSet<'a>) = remove a 1u s
+    let removeSingle a s = remove a 1u s
     
     // Given a folding function f, accumulator acc and multiset s, it returns folded multiset s
     let fold f acc (MS s) = Map.fold f acc s

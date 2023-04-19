@@ -1,4 +1,5 @@
-﻿module Dictionary
+﻿namespace CatSquish
+module Dictionary =
     type Dict
     val empty : unit -> Dict
     val insert : string -> Dict -> Dict
