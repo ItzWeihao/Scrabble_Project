@@ -7,26 +7,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="453b20ad-bf55-4e9a-9312-75325b2fdd4a" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.ScrabbleTemplate/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.ScrabbleTemplate/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ScrabbleBot/Parser.fs" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleBot/Parser.fs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ScrabbleBot/Scrabble.fs" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleBot/Scrabble.fs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ScrabbleBot/Scrabble.fsi" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleBot/Scrabble.fsi" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ScrabbleBot/bin/Debug/net7.0/ScrabbleBot.dll" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleBot/bin/Debug/net7.0/ScrabbleBot.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ScrabbleBot/bin/Debug/net7.0/ScrabbleBot.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleBot/bin/Debug/net7.0/ScrabbleBot.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ScrabbleBot/obj/Debug/net7.0/ScrabbleBot.dll" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleBot/obj/Debug/net7.0/ScrabbleBot.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ScrabbleBot/obj/Debug/net7.0/ScrabbleBot.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleBot/obj/Debug/net7.0/ScrabbleBot.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ScrabbleBot/obj/Debug/net7.0/ref/ScrabbleBot.dll" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleBot/obj/Debug/net7.0/ref/ScrabbleBot.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ScrabbleBot/obj/Debug/net7.0/refint/ScrabbleBot.dll" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleBot/obj/Debug/net7.0/refint/ScrabbleBot.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ScrabbleTemplate/Program.fs" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleTemplate/Program.fs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ScrabbleTemplate/bin/Debug/net7.0/ScrabbleBot.dll" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleTemplate/bin/Debug/net7.0/ScrabbleBot.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ScrabbleTemplate/bin/Debug/net7.0/ScrabbleBot.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleTemplate/bin/Debug/net7.0/ScrabbleBot.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ScrabbleTemplate/bin/Debug/net7.0/ScrabbleTemplate.dll" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleTemplate/bin/Debug/net7.0/ScrabbleTemplate.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ScrabbleTemplate/bin/Debug/net7.0/ScrabbleTemplate.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleTemplate/bin/Debug/net7.0/ScrabbleTemplate.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ScrabbleTemplate/obj/Debug/net7.0/ScrabbleTemplate.dll" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleTemplate/obj/Debug/net7.0/ScrabbleTemplate.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ScrabbleTemplate/obj/Debug/net7.0/ScrabbleTemplate.fsproj.AssemblyReference.cache" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleTemplate/obj/Debug/net7.0/ScrabbleTemplate.fsproj.AssemblyReference.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ScrabbleTemplate/obj/Debug/net7.0/ScrabbleTemplate.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/ScrabbleTemplate/obj/Debug/net7.0/ScrabbleTemplate.pdb" afterDir="false" />
-    </list>
+    <list default="true" id="453b20ad-bf55-4e9a-9312-75325b2fdd4a" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -37,6 +18,7 @@
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/a9c833d7408adb1db3917ee4b8f22d3114c00/1d/a396716f/Play.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/a9c833d7408adb1db3917ee4b8f22d3114c00/3c/95a2d480/Bot.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/a9c833d7408adb1db3917ee4b8f22d3114c00/44/c845ad18/Scrabble.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/ebab5691593140ff9a52907bc20b201120c00/3f/d1cb3bb0/boardProg.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/ebab5691593140ff9a52907bc20b201120c00/4b/5432305e/ClientMessage.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/ebab5691593140ff9a52907bc20b201120c00/69/b445de4b/Square.cs" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/ebab5691593140ff9a52907bc20b201120c00/a1/44f93e62/Dictionary.cs" root0="SKIP_HIGHLIGHTING" />
@@ -112,7 +94,7 @@
       <workItem from="1681286060352" duration="6315000" />
       <workItem from="1681894720050" duration="96000" />
       <workItem from="1681894838317" duration="1896000" />
-      <workItem from="1681899489966" duration="4714000" />
+      <workItem from="1681899489966" duration="5025000" />
     </task>
     <servers />
   </component>
