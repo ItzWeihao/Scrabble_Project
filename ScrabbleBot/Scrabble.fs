@@ -77,15 +77,17 @@ module Scrabble =
             let input =  System.Console.ReadLine()
             let move = RegEx.parseMove input
                         
-            debugPrint (sprintf "Player %d -> Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
+            debugPrint $"Player %d{State.playerNumber st} -> Server:\n%A{move}\n" // keep the debug lines. They are useful.
             send cstream (SMPlay move)
 
             let msg = recv cstream
-            debugPrint (sprintf "Player %d <- Server:\n%A\n" (State.playerNumber st) move) // keep the debug lines. They are useful.
+            debugPrint $"Player %d{State.playerNumber st} <- Server:\n%A{move}\n" // keep the debug lines. They are useful.
             
             match msg with
             | RCM (CMPlaySuccess(ms, points, newPieces)) ->
                 (* Successful play by you. Update your state (remove old tiles, add the new ones, change turn, etc) *)
+                
+                debugPrint "!!!! Received CMPlaySuccess !!!!"
                 let removePiece = List.fold (fun acc elm -> removeSingle (fst(snd(elm))) acc) st.hand ms
                 let addPiece = List.fold (fun acc elm -> add (fst elm) (snd elm) acc) removePiece newPieces
                 
@@ -94,16 +96,26 @@ module Scrabble =
                 aux st'
             | RCM (CMPlayed (pid, ms, points)) ->
                 (* Successful play by other player. Update your state *)
+                
+                debugPrint "!!!! Received CMPlayed !!!!"
                 let newBoard = List.fold (fun acc (coord, (_, (char, points))) -> Map.add coord (char, points) acc) st.boardState ms
                 let st' = State.mkState st.board st.dict st.playerNumber st.numberOfPlayer st.hand newBoard // This state needs to be updated
-                aux st' 
+                aux st'
             | RCM (CMPlayFailed (pid, ms)) ->
                 (* Failed play. Update your state *)
-                let st' = st // This state needs to be updated
+                debugPrint "!!!! Received CMPlayFailed !!!!"
+                
+                let newBoard = List.fold (fun acc (coord, (_, (char, points))) -> Map.add coord (char, points) acc ) st.boardState ms
+                let st' = State.mkState st.board st.dict st.playerNumber st.numberOfPlayer st.hand newBoard
                 aux st'
+                
+            | RCM (CMPassed (pid)) ->
+                aux st
             | RCM (CMGameOver _) -> ()
-            | RCM a -> failwith (sprintf "not implmented: %A" a)
-            | RGPE err -> printfn "Gameplay Error:\n%A" err; aux st
+            
+            | RCM a -> failwith $"not implemented: %A{a}"
+            
+            | RGPE err -> printfn $"Gameplay Error:\n%A{err}"; aux st
 
 
         aux st
@@ -119,12 +131,12 @@ module Scrabble =
             (timeout : uint32 option) 
             (cstream : Stream) =
         debugPrint 
-            (sprintf "Starting game!
-                      number of players = %d
-                      player id = %d
-                      player turn = %d
-                      hand =  %A
-                      timeout = %A\n\n" numPlayers playerNumber playerTurn hand timeout)
+            $"Starting game!
+                      number of players = %d{numPlayers}
+                      player id = %d{playerNumber}
+                      player turn = %d{playerTurn}
+                      hand =  %A{hand}
+                      timeout = %A{timeout}\n\n"
 
         //let dict = dictf true // Uncomment if using a gaddag for your dictionary
         let dict = dictf false // Uncomment if using a trie for your dictionary
