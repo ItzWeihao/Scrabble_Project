@@ -35,31 +35,35 @@ let main argv =
 //    let board      = ScrabbleUtil.HoleBoard.holeBoard ()
 //    let board      = ScrabbleUtil.InfiniteHoleBoard.infiniteHoleBoard ()
 
-    let words     = readLines "../../../Dictionaries/English.txt"
-
+    let words      = readLines "../../../Dictionaries/English.txt"
     let handSize   = 7u
     let timeout    = None
     let tiles      = ScrabbleUtil.English.tiles 1u
     let seed       = None
     let port       = 13001
-
-    let dictAPI =
+    let dictAPI    =
         // Uncomment if you have implemented a dictionary. last element None if you have not implemented a GADDAG
-        //Some (Dictionary.empty, Dictionary.insert, Dictionary.step, Some Dictionary.reverse)
-        None
-        
-    // Uncomment this line to call your client
+        Some (CatSquish.Dictionary.empty, CatSquish.Dictionary.insert, CatSquish.Dictionary.step, None)
+        //None
     
-    let (dictionary, time) =
-        time (fun () -> ScrabbleUtil.Dictionary.mkDict words dictAPI)
-        
-    let players    = spawnMultiples "CatSquish" dictionary CatSquish.Scrabble.startGame 1
+    // Uncomment this line to call your client
+    let (dictionary, time) = time (fun () -> ScrabbleUtil.Dictionary.mkDict words dictAPI)
+    
+    // Uncomment to test your dictionary
+    ScrabbleUtil.DebugPrint.debugPrint ("Dictionary test successful\n")
+    let incorrectWords = ScrabbleUtil.Dictionary.test words 10 (dictionary false) // change the boolean to true if using a GADDAG
+    
+    match incorrectWords with
+    | [] -> ScrabbleUtil.DebugPrint.debugPrint ("Dictionary test successful!\n")
+    | _ -> ScrabbleUtil.DebugPrint.debugPrint ("Dictionary test failed for at least the following words: \n")
+           List.iter (fun str -> ScrabbleUtil.DebugPrint.debugPrint $"%s{str}\n") incorrectWords
+    
+    let players = spawnMultiples "CatSquish" dictionary CatSquish.Scrabble.startGame 1
 
-    // let players = spawnMultiples "OxyphenButazone" dictionary Oxyphenbutazone.Scrabble.startGame 2
+    //let players = spawnMultiples "OxyphenButazone" dictionary Oxyphenbutazone.Scrabble.startGame 2
 
-
-    do ScrabbleServer.Comm.startGame 
-          board dictionary handSize timeout tiles seed port players
+    do ScrabbleServer.Comm.startGame
+           board dictionary handSize timeout tiles seed port players
     
     ScrabbleUtil.DebugPrint.forcePrint ("Server has terminated. Press Enter to exit program.\n")
     System.Console.ReadLine () |> ignore
