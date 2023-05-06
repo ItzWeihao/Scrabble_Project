@@ -24,16 +24,14 @@ let main argv =
     System.Console.ForegroundColor <- System.ConsoleColor.Black
     System.Console.Clear()
 
-//    let board        = ScrabbleUtil.StandardBoard.standardBoard ()
+    // let board   = ScrabbleUtil.StandardBoard.standardBoard ()
     let board      = ScrabbleUtil.InfiniteBoard.infiniteBoard ()
-
-//    let board      = ScrabbleUtil.RandomBoard.randomBoard ()
-//    let board      = ScrabbleUtil.RandomBoard.randomBoardSeed (Some 42)
-//    let board      = ScrabbleUtil.InfiniteRandomBoard.infiniteRandomBoard ()
-//    let board      = ScrabbleUtil.InfiniteRandomBoard.infiniteRandomBoardSeed (Some 42)
-
-//    let board      = ScrabbleUtil.HoleBoard.holeBoard ()
-//    let board      = ScrabbleUtil.InfiniteHoleBoard.infiniteHoleBoard ()
+    // let board   = ScrabbleUtil.RandomBoard.randomBoard ()
+    // let board   = ScrabbleUtil.RandomBoard.randomBoardSeed (Some 42)
+    // let board   = ScrabbleUtil.InfiniteRandomBoard.infiniteRandomBoard ()
+    // let board   = ScrabbleUtil.InfiniteRandomBoard.infiniteRandomBoardSeed (Some 42)
+    // let board   = ScrabbleUtil.HoleBoard.holeBoard ()
+    // let board   = ScrabbleUtil.InfiniteHoleBoard.infiniteHoleBoard ()
 
     let words      = readLines "../../../Dictionaries/English.txt"
     let handSize   = 7u
@@ -41,10 +39,7 @@ let main argv =
     let tiles      = ScrabbleUtil.English.tiles 1u
     let seed       = None
     let port       = 13001
-    let dictAPI    =
-        // Uncomment if you have implemented a dictionary. last element None if you have not implemented a GADDAG
-        Some (CatSquish.Dictionary.empty, CatSquish.Dictionary.insert, CatSquish.Dictionary.step, None)
-        //None
+    let dictAPI    = Some (CatSquish.Dictionary.empty, CatSquish.Dictionary.insert, CatSquish.Dictionary.step, None) // Uncomment if you have implemented a dictionary. last element None if you have not implemented a GADDAG
     
     // Uncomment this line to call your client
     let (dictionary, time) = time (fun () -> ScrabbleUtil.Dictionary.mkDict words dictAPI)
@@ -59,7 +54,6 @@ let main argv =
            List.iter (fun str -> ScrabbleUtil.DebugPrint.debugPrint $"%s{str}\n") incorrectWords
     
     let players = spawnMultiples "CatSquish" dictionary CatSquish.Scrabble.startGame 1
-
     //let players = spawnMultiples "OxyphenButazone" dictionary Oxyphenbutazone.Scrabble.startGame 2
 
     do ScrabbleServer.Comm.startGame
