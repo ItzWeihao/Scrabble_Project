@@ -35,14 +35,17 @@ module RegEx =
         | Regex pass _ -> send cstream SMPass
 
  module Print =
-    let printHand pieces hand =
-        hand |> fold (fun _ x i -> forcePrint (sprintf "%d -> (%A, %d)\n" x (Map.find x pieces) i)) ()
 
-// Make sure to keep your state localised in this module. It makes your life a whole lot easier.
-// Currently, it only keeps track of your hand, your player number, your board, and your dictionary,
-// but it could, potentially, keep track of other useful
-// information, such as number of players, player turn, etc.
+    let printHand pieces hand =
+        hand |>
+        MultiSet.fold (fun _ x i -> forcePrint (sprintf "%d -> (%A, %d)\n" x (Map.find x pieces) i)) ()
+
 module State = 
+    // Make sure to keep your state localised in this module. It makes your life a whole lot easier.
+    // Currently, it only keeps track of your hand, your player number, your board, and your dictionary,
+    // but it could, potentially, keep track of other useful
+    // information, such as number of players, player turn, etc.
+
     type state = {
         board           : boardProg
         dict            : Dictionary.Dict
@@ -71,12 +74,13 @@ module Scrabble =
             // remove the force print when you move on from manual input (or when you have learnt the format)
             // forcePrint "Input move (format '(<x-coordinate> <y-coordinate> <piece id><character><point-value> )*', note the absence of space between the last inputs)\n\n"
             let input =  Console.ReadLine()
-            RegEx.parseMove input cstream
+            let move  = RegEx.parseMove input
             
-            //debugPrint $"Player %d{st.playerNumber} -> Server:\n%A{move}\n"
+            debugPrint $"Player %d{st.playerNumber} -> Server:\n%A{move}\n"
+            send cstream (SMPlay move)
             
             let msg = recv cstream
-            //debugPrint $"Player %d{st.playerNumber} <- Server:\n%A{move}\n"
+            debugPrint $"Player %d{st.playerNumber} <- Server:\n%A{move}\n"
             
             match msg with
             | RCM (CMPlayed (playerId, move, points)) ->
@@ -84,10 +88,10 @@ module Scrabble =
                 let newBoard = List.fold (fun acc (coord, (_, (char, points))) -> Map.add coord (char, points) acc) st.boardState move
                 let st' = State.mkState st.board st.dict st.playerNumber st.numberOfPlayer st.hand newBoard
                 aux st'
-            | RCM (CMPlaySuccess (move, points, newTiles)) ->
+            | RCM (CMPlaySuccess (move, points, newPieces)) ->
                 (* Successful play by you. Update your state (remove old tiles, add the new ones, change turn, etc) *)
                 let removePiece = List.fold (fun acc elm -> removeSingle (fst(snd(elm))) acc) st.hand move
-                let addPiece = List.fold (fun acc elm -> add (fst elm) (snd elm) acc) removePiece newTiles
+                let addPiece = List.fold (fun acc elm -> add (fst elm) (snd elm) acc) removePiece newPieces
                 let newBoard = List.fold (fun acc (coord, (_, (char, points))) -> Map.add coord (char, points) acc) st.boardState move
                 let st' = State.mkState st.board st.dict st.playerNumber st.numberOfPlayer addPiece newBoard
                 aux st'
@@ -96,14 +100,11 @@ module Scrabble =
                 let newBoard = List.fold (fun acc (coord, (_, (char, points))) -> Map.add coord (char, points) acc) st.boardState move
                 let st' = State.mkState st.board st.dict st.playerNumber st.numberOfPlayer st.hand newBoard
                 aux st'
-            | RCM (CMPassed playerId) ->
-                debugPrint $"Player {playerId} died!\n"
-                aux (State.mkState st.board st.dict st.playerNumber st.numberOfPlayer st.hand st.boardState)
+            //| RCM (CMPassed playerId) ->
+            //    aux (State.mkState st.board st.dict st.playerNumber st.numberOfPlayer st.hand st.boardState)
             //| RCM (CMForfeit playerId) ->
             //| RCM (CMChange (playerId, numberOfTiles)) ->
-            | RCM (CMChangeSuccess newTiles) ->
-                let addPiece = List.fold (fun acc elm -> add (fst elm) (snd elm) acc) st.hand newTiles
-                aux (State.mkState st.board st.dict st.playerNumber st.numberOfPlayer addPiece st.boardState)
+            //| RCM (CMChangeSuccess newTiles) ->
             //| RCM (CMTimeout playerId) ->
             | RCM (CMGameOver _) -> ()
             | RCM a -> failwith (sprintf "not implmented: %A" a)
