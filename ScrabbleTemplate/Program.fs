@@ -39,7 +39,7 @@ let main argv =
     let tiles      = ScrabbleUtil.English.tiles 1u
     let seed       = None
     let port       = 13001
-    let dictAPI    = Some (CatSquish.Dictionary.empty, CatSquish.Dictionary.insert, CatSquish.Dictionary.step, None) // Uncomment if you have implemented a dictionary. last element None if you have not implemented a GADDAG
+    let dictAPI    = Some (CatSquish.Dictionary.empty, CatSquish.Dictionary.insertWord, CatSquish.Dictionary.step, None) // Uncomment if you have implemented a dictionary. last element None if you have not implemented a GADDAG
     
     // Uncomment this line to call your client
     let (dictionary, time) = time (fun () -> ScrabbleUtil.Dictionary.mkDict words dictAPI)

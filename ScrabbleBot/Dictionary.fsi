@@ -1,9 +1,11 @@
 ﻿namespace CatSquish
 
 module Dictionary =
-    type Dict
+    type Dict =
+        | Leaf of bool
+        | Node of bool * Map<char, Dict>
+    
     val empty : unit -> Dict
-    val insert : string -> Dict -> Dict
+    val insertWord : string -> Dict -> Dict
     val step : char -> Dict -> (bool * Dict) option
-    val reverse : (Dict -> (bool * Dict) option)
-    val lookup : string -> (Dict -> bool)
+    val containsWord : string -> (Dict -> bool)
