@@ -1,8 +1,8 @@
 ﻿namespace CatSquish
 
-open System
 open CatSquish.MultiSet
 open ScrabbleUtil
+open ScrabbleUtil.Dictionary
 open ScrabbleUtil.ServerCommunication
 open System.IO
 open ScrabbleUtil.DebugPrint
@@ -35,10 +35,7 @@ module RegEx =
         | Regex pass _ -> send cstream SMPass
 
  module Print =
-
-    let printHand pieces hand =
-        hand |>
-        MultiSet.fold (fun _ x i -> forcePrint (sprintf "%d -> (%A, %d)\n" x (Map.find x pieces) i)) ()
+    let printHand pieces hand = hand |> fold (fun _ x i -> forcePrint (sprintf "%d -> (%A, %d)\n" x (Map.find x pieces) i)) ()
 
 module State = 
     // Make sure to keep your state localised in this module. It makes your life a whole lot easier.
@@ -46,9 +43,31 @@ module State =
     // but it could, potentially, keep track of other useful
     // information, such as number of players, player turn, etc.
 
+    let getPieceValue (pieces: Map<uint32,tile>) (piece: char) =
+        snd (pieces.Item((uint32 piece)-64u).MinimumElement)
+    
+    // <(pierce num; (piece char; piece amount)); ...> --> <(piece num; piece char); ...>
+    let getPieceData (pieces: Map<uint32,tile>) =
+        Map.fold (fun s k v -> Map.add k (fst (Set.toList v).Head) s) Map.empty pieces
+    
+    let sortWordsByValue (words: string list) (pieces: Map<uint32,tile>) : string list =
+        List.sortByDescending (fun s -> s.ToCharArray() |> List.ofArray |> List.fold (fun a v -> a + (getPieceValue pieces v)) 0) words
+    
+    let lookupWords (hand: string List) (dict: Dict) : string list =
+        let rec rackLookup l w d =
+            List.fold (fun s v ->
+                    let wordn = if lookup w d then [w] else List.empty
+                    s @ wordn @ (rackLookup (List.filter ((<>) v) l) (w+v) d)
+                    ) List.empty l
+        rackLookup (hand @ [""]) "" dict |> Seq.distinct |> List.ofSeq
+    
+    // <(char num; char amount); ...> --> [char num; ...] --> [char string; ...]
+    let handToList (hand: MultiSet<uint32>) (pieces: Map<uint32,tile>) : string list =
+        List.fold (fun s v -> s @ [(getPieceData pieces).Item(v).ToString()]) List.empty (toList hand)
+
     type state = {
         board           : boardProg
-        dict            : Dictionary.Dict
+        dict            : Dict
         playerNumber    : uint32
         numberOfPlayer  : uint32
         hand            : MultiSet.MultiSet<uint32>
@@ -69,20 +88,32 @@ module State =
 module Scrabble =
     let playGame cstream pieces (st : State.state) =
         let rec aux (st : State.state) =
-            Print.printHand pieces (st.hand)
-
+            Print.printHand pieces st.hand
+            
+            debugPrint $"{State.getPieceData pieces}\n"
+            let letters = State.handToList st.hand pieces
+            let words   = State.lookupWords letters st.dict
+            debugPrint $"list: {toList st.hand}\n"
+            debugPrint $"chars: {letters}\n"
+            for w in words do
+                debugPrint $"word: {w}\n"
+            debugPrint "--------------------------------------\n"
+            for w in (State.sortWordsByValue words pieces) do
+                debugPrint $"word: {w}\n"
+            
+            //let letters = ["C";"A";"T";]
+            //let result = State.lookupWords letters "" st.dict
+            //debugPrint $"RESULT_VARIABLE = %A{result.Length}\n"
+            
             // remove the force print when you move on from manual input (or when you have learnt the format)
             // forcePrint "Input move (format '(<x-coordinate> <y-coordinate> <piece id><character><point-value> )*', note the absence of space between the last inputs)\n\n"
-            let input =  Console.ReadLine()
-            let move  = RegEx.parseMove input
+            //let input =  Console.ReadLine()
+            //RegEx.parseMove "pass " cstream
             
-            debugPrint $"Player %d{st.playerNumber} -> Server:\n%A{move}\n"
-            send cstream (SMPlay move)
+            //debugPrint $"Player %d{st.playerNumber} -> Server:\n%A{move}\n"
+            //debugPrint $"Player %d{st.playerNumber} <- Server:\n%A{move}\n"
             
-            let msg = recv cstream
-            debugPrint $"Player %d{st.playerNumber} <- Server:\n%A{move}\n"
-            
-            match msg with
+            match (recv cstream) with
             | RCM (CMPlayed (playerId, move, points)) ->
                 (* Successful play by other player. Update your state *)
                 let newBoard = List.fold (fun acc (coord, (_, (char, points))) -> Map.add coord (char, points) acc) st.boardState move
@@ -98,10 +129,9 @@ module Scrabble =
             | RCM (CMPlayFailed (playerId, move)) ->
                 (* Failed play. Update your state *)
                 let newBoard = List.fold (fun acc (coord, (_, (char, points))) -> Map.add coord (char, points) acc) st.boardState move
-                let st' = State.mkState st.board st.dict st.playerNumber st.numberOfPlayer st.hand newBoard
-                aux st'
-            //| RCM (CMPassed playerId) ->
-            //    aux (State.mkState st.board st.dict st.playerNumber st.numberOfPlayer st.hand st.boardState)
+                aux (State.mkState st.board st.dict st.playerNumber st.numberOfPlayer st.hand newBoard)
+            | RCM (CMPassed playerId) ->
+                aux (State.mkState st.board st.dict st.playerNumber st.numberOfPlayer st.hand st.boardState)
             //| RCM (CMForfeit playerId) ->
             //| RCM (CMChange (playerId, numberOfTiles)) ->
             //| RCM (CMChangeSuccess newTiles) ->
@@ -113,7 +143,7 @@ module Scrabble =
 
     let startGame 
             (boardP : boardProg) 
-            (dictf : bool -> Dictionary.Dict) 
+            (dictf : bool -> Dict) 
             (numPlayers : uint32) 
             (playerNumber : uint32) 
             (playerTurn  : uint32) 
@@ -131,7 +161,6 @@ module Scrabble =
 
         let dict = dictf false // Set to false for using trie, true for gaddag
         // let board = Parser.mkBoard boardP
-        
         let handSet = List.fold (fun acc (x, k) -> add x k acc) empty hand
 
         fun () -> playGame cstream tiles (State.state boardP dict playerNumber numPlayers handSet Map.empty)

@@ -8,7 +8,7 @@ module internal MultiSet =
     let empty = MS Map.empty
     
     // Given a multiset s it returns true if s is empty else false
-    let isEmpty (MS s) = s.IsEmpty 
+    let isEmpty (MS s) = s.IsEmpty
     
     // Given a multiset s it returns the sum of number of all elements in s
     // 0u = returns uint32
