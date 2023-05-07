@@ -1,6 +1,7 @@
 ﻿namespace CatSquish
 
 open CatSquish.MultiSet
+open Parser
 open ScrabbleUtil
 open ScrabbleUtil.Dictionary
 open ScrabbleUtil.ServerCommunication
@@ -20,6 +21,7 @@ module RegEx =
         let play = @"([-]?[0-9]+[ ])([-]?[0-9]+[ ])([0-9]+)([A-Z]{1})([0-9]+)[ ]?"
         let pass = @"pass[ ]?"
         
+        debugPrint $"\nCurrent move: {ts}\n\n"
         match ts with
         | Regex play _ ->
             let rx = (Regex.Matches(ts, play) |>
@@ -45,6 +47,15 @@ module State =
 
     let getPieceValue (pieces: Map<uint32,tile>) (piece: char) =
         snd (pieces.Item((uint32 piece)-64u).MinimumElement)
+        
+    let layWord (board: Map<coord, char * int>) (pieces: Map<uint32,tile>) (word: string) (cstream: Stream) =
+        let mutable i = -1
+        match board.Count with
+        | 0 -> RegEx.parseMove (List.fold (fun s v ->
+            i <- i+1
+            s + $"0 {i} {int v-64}{v}{getPieceValue pieces v} "
+            ) "" (word.ToCharArray() |> List.ofArray)) cstream
+        | _ -> ()
     
     // <(pierce num; (piece char; piece amount)); ...> --> <(piece num; piece char); ...>
     let getPieceData (pieces: Map<uint32,tile>) =
@@ -95,9 +106,9 @@ module Scrabble =
             let words   = State.lookupWords letters st.dict
             debugPrint $"list: {toList st.hand}\n"
             debugPrint $"chars: {letters}\n"
-            for w in words do
-                debugPrint $"word: {w}\n"
-            debugPrint "--------------------------------------\n"
+            //for w in words do
+            //    debugPrint $"word: {w}\n"
+            //debugPrint "--------------------------------------\n"
             for w in (State.sortWordsByValue words pieces) do
                 debugPrint $"word: {w}\n"
             
@@ -107,8 +118,17 @@ module Scrabble =
             
             // remove the force print when you move on from manual input (or when you have learnt the format)
             // forcePrint "Input move (format '(<x-coordinate> <y-coordinate> <piece id><character><point-value> )*', note the absence of space between the last inputs)\n\n"
-            //let input =  Console.ReadLine()
-            //RegEx.parseMove "pass " cstream
+            if st.boardState.Count > 0 then
+                debugPrint $"{st.boardState.[(0,0)]}\n"
+                debugPrint $"{st.boardState.[(0,1)]}\n"
+            debugPrint $"board count: {st.boardState.Count}\n"
+            for n in st.boardState.Values do
+                debugPrint $"coord: {n}\n"
+                
+            State.layWord st.boardState pieces (State.sortWordsByValue words pieces).Head cstream
+            
+            //let input = System.Console.ReadLine()
+            //RegEx.parseMove input cstream
             
             //debugPrint $"Player %d{st.playerNumber} -> Server:\n%A{move}\n"
             //debugPrint $"Player %d{st.playerNumber} <- Server:\n%A{move}\n"
@@ -133,7 +153,7 @@ module Scrabble =
             | RCM (CMPassed playerId) ->
                 aux (State.mkState st.board st.dict st.playerNumber st.numberOfPlayer st.hand st.boardState)
             //| RCM (CMForfeit playerId) ->
-            //| RCM (CMChange (playerId, numberOfTiles)) ->
+            //| RCM (CMChange (playerId, numberOfTiles)) ->  
             //| RCM (CMChangeSuccess newTiles) ->
             //| RCM (CMTimeout playerId) ->
             | RCM (CMGameOver _) -> ()
