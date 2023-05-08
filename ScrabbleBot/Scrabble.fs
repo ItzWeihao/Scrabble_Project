@@ -46,33 +46,29 @@ module State =
     // Currently, it only keeps track of your hand, your player number, your board, and your dictionary,
     // but it could, potentially, keep track of other useful
     // information, such as number of players, player turn, etc.
-
-    
     type TileMap = Map<uint32, tile>
     type Word = char list
+    type WordList = string list
+    type CharPos = (coord * (bool * char)) Option
+    type LayedWordsList = (coord * (bool * string)) list
+    type CharIndexList = (int * char) list
     
     let getPieceValue (pieces: TileMap) (piece: char) =
         snd (pieces.Item((uint32 piece)-64u).MinimumElement)
         
-    let isWordLayable (words: (coord * (bool * string)) list) (coord: coord) (isVertical: bool) : bool =
-        let i = match isVertical with | true -> (fst coord+1, snd coord) | false -> (fst coord, snd coord+1)
-        //for l in board do debugPrint $"coord: {l.Key}, char: {l.Value}\n"
-        //not (Map.exists (fun n _ -> debugPrint $"i: {i}, n: {n}\n"; n = i) board)
-        not (List.exists (fun (c, (v, s: string)) ->
-            List.exists (fun l -> match v with
-                         | true -> (fst c, snd c+l) = i
-                         | false -> (fst c+l, snd c) = i
-                         ) [ 0 .. s.Length ]
-            ) words)
+    let isWordLayable (words: LayedWordsList) (pos: coord) (isVertical: bool) : bool =
+        let i = match isVertical with | true -> (fst pos+1, snd pos) | false -> (fst pos, snd pos+1)
+        not (List.exists (fun (c, (v, s)) -> match v with | true -> (fst c+1, snd c) = i | false -> (fst c, snd c+1) = i) words)
     
-    let layPosition (words: (coord * (bool * string)) list) : coord * (bool * char) =
+    let layPosition (words: LayedWordsList) : CharPos =
         debugPrint $"can lay word: {isWordLayable words (0,0) true}\n"
-        let word = List.find (fun w -> debugPrint $"{w}\n"; isWordLayable words (fst w) (fst (snd w))) words
-        let coordinate = fst word
-        let isVertical = not (fst (snd word))
-        let character  = (snd (snd word)).Chars(0)
-        debugPrint $"position debug: {word}\n"
-        (coordinate, (isVertical, character))
+        match List.tryFind (fun w -> debugPrint $"{w}\n"; isWordLayable words (fst w) (fst (snd w))) words with
+        | Some word -> let coordinate = fst word
+                       let isVertical = not (fst (snd word))
+                       let character  = (snd (snd word)).Chars(0)
+                       debugPrint $"position debug: {word}\n"
+                       Some (coordinate, (isVertical, character))
+        | None -> None
     
     let layWord (pieces: TileMap) (word: Word) (startPos: coord) (isVertical: bool) (cstream: Stream) =
         let mutable i = match isVertical with | true -> (fst startPos, -1) | false -> (-1, snd startPos)
@@ -89,20 +85,22 @@ module State =
             (newCoord, wordCut)
         else (startPos, wordToLay)
     
-    // <(piece index; (piece char; piece value)); ...> --> <(piece index; piece char); ...>
     let getPieceData (pieces: TileMap) =
         Map.fold (fun s k v -> Map.add k (fst (Set.toList v).Head) s) Map.empty pieces
     
-    let sortWordsByValue (words: string list) (pieces: TileMap) : string list =
+    let sortWordsByValue (words: WordList) (pieces: TileMap) : WordList =
         List.sortByDescending (fun s -> s.ToCharArray() |> List.ofArray |> List.fold (fun a v -> a + (getPieceValue pieces v)) 0) words
     
-    let lookupWords (hand: Word) (dict: Dict) : string list =
+    let lookupWords (hand: Word) (dict: Dict) (specialChars: CharPos) : WordList =
         let rec rackLookup l w d =
             List.fold (fun s v ->
-                    let wordn = if lookup w d then [w] else []
-                    s @ wordn @ (rackLookup (List.filter ((<>) v) l) (w+v) d)
-                    ) List.empty l
-        rackLookup (hand @ [' ']) "" dict |> Seq.distinct |> List.ofSeq
+                    let wordn = match lookup w d with | true -> [w] | false -> []
+                    s @ wordn @ (rackLookup (List.filter ((<>) v) l) (w+v.ToString()) d)
+                    ) [] l
+        let words = rackLookup (hand @ [' ']) "" dict |> Seq.distinct |> List.ofSeq
+        match specialChars with
+        | Some charList -> 
+        | None -> words
     
     let handToList (hand: MultiSet<uint32>) (pieces: TileMap) : Word =
         toList hand |> List.fold (fun s v -> s @ [(getPieceData pieces).Item(v)]) []
@@ -110,7 +108,6 @@ module State =
     let isWordVertical (coord1: coord) (coord2: coord) : bool =
         (snd coord1) <> (snd coord2)
     
-    // [(coord; (piece index; (piece char; piece value)))] --> (coord; (vertical; word))
     let moveToPair (move: (coord * (uint32 * (char * int))) list) : coord * (bool * string) =
         let word = List.fold (fun s v -> s + (fst (snd (snd v))).ToString()) "" move
         (fst move.Head, (isWordVertical (fst move.Head) (fst (move.Item(1))), word))
@@ -142,21 +139,17 @@ module Scrabble =
         let rec aux (st : State.state) =
             Print.printHand pieces st.hand
             
-            let position = if st.layedWords.Length <> 0 then State.layPosition st.layedWords else ((0,0), (true, '@'))
-            let coord = fst position
-            let vertical = fst (snd position)
-            let character = (snd (snd position)).ToString()
+            // Finds words and their position on the board
+            let position = State.layPosition st.layedWords
+            let letters  = State.handToList st.hand pieces
+            let words    = State.lookupWords letters st.dict []
+            let sorted   = State.sortWordsByValue words pieces
             
+            // Debugging
             debugPrint $"{State.getPieceData pieces}\n"
-            let letters = State.handToList st.hand pieces
-            let words   = State.lookupWords letters st.dict
-            let sort    = List.filter (fun w -> Regex.Matches(w,$"^{character}[A-Z]+").Count > 0) words
             debugPrint $"list: {toList st.hand}\n"
             debugPrint $"chars: {letters}\n"
-            //for w in words do
-            //    debugPrint $"word: {w}\n"
-            //debugPrint "--------------------------------------\n"
-            for w in (State.sortWordsByValue words pieces) do
+            for w in sorted do
                 debugPrint $"word: {w}\n"
             
             //let letters = ["C";"A";"T";]
