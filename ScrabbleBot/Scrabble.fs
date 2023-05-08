@@ -41,13 +41,17 @@ module RegEx =
  module Print =
     let printHand pieces hand = hand |> fold (fun _ x i -> forcePrint (sprintf "%d -> (%A, %d)\n" x (Map.find x pieces) i)) ()
 
-module State = 
+module State =
     // Make sure to keep your state localised in this module. It makes your life a whole lot easier.
     // Currently, it only keeps track of your hand, your player number, your board, and your dictionary,
     // but it could, potentially, keep track of other useful
     // information, such as number of players, player turn, etc.
 
-    let getPieceValue (pieces: Map<uint32,tile>) (piece: char) =
+    
+    type TileMap = Map<uint32, tile>
+    type Word = char list
+    
+    let getPieceValue (pieces: TileMap) (piece: char) =
         snd (pieces.Item((uint32 piece)-64u).MinimumElement)
         
     let isWordLayable (words: (coord * (bool * string)) list) (coord: coord) (isVertical: bool) : bool =
@@ -70,14 +74,14 @@ module State =
         debugPrint $"position debug: {word}\n"
         (coordinate, (isVertical, character))
     
-    let layWord (pieces: Map<uint32,tile>) (word: char list) (startPos: coord) (isVertical: bool) (cstream: Stream) =
+    let layWord (pieces: TileMap) (word: Word) (startPos: coord) (isVertical: bool) (cstream: Stream) =
         let mutable i = match isVertical with | true -> (fst startPos, -1) | false -> (-1, snd startPos)
         RegEx.parseMove (List.fold (fun s v ->
             i <- match isVertical with | true -> (fst i, snd i+1) | false -> (fst i+1, snd i)
             s + $"{fst i} {snd i} {int v-64}{v}{getPieceValue pieces v} "
             ) "" word) cstream
         
-    let cutWord (board: Map<coord, char * int>) (startPos: coord) (isVertical: bool) (wordList: string list): coord * char list =
+    let cutWord (board: Map<coord, char * int>) (startPos: coord) (isVertical: bool) (wordList: string list): coord * Word =
         let wordToLay = wordList.Head.ToCharArray() |> List.ofArray
         if board.Count > 0 then
             let wordCut = match board.Count <> 0 with | true -> wordToLay.Tail | false -> wordToLay
@@ -86,13 +90,13 @@ module State =
         else (startPos, wordToLay)
     
     // <(piece index; (piece char; piece value)); ...> --> <(piece index; piece char); ...>
-    let getPieceData (pieces: Map<uint32,tile>) =
+    let getPieceData (pieces: TileMap) =
         Map.fold (fun s k v -> Map.add k (fst (Set.toList v).Head) s) Map.empty pieces
     
-    let sortWordsByValue (words: string list) (pieces: Map<uint32,tile>) : string list =
+    let sortWordsByValue (words: string list) (pieces: TileMap) : string list =
         List.sortByDescending (fun s -> s.ToCharArray() |> List.ofArray |> List.fold (fun a v -> a + (getPieceValue pieces v)) 0) words
     
-    let lookupWords (hand: char List) (dict: Dict) : string list =
+    let lookupWords (hand: Word) (dict: Dict) : string list =
         let rec rackLookup l w d =
             List.fold (fun s v ->
                     let wordn = if lookup w d then [w] else []
@@ -100,7 +104,7 @@ module State =
                     ) List.empty l
         rackLookup (hand @ [' ']) "" dict |> Seq.distinct |> List.ofSeq
     
-    let handToList (hand: MultiSet<uint32>) (pieces: Map<uint32,tile>) : char list =
+    let handToList (hand: MultiSet<uint32>) (pieces: TileMap) : Word =
         toList hand |> List.fold (fun s v -> s @ [(getPieceData pieces).Item(v)]) []
         
     let isWordVertical (coord1: coord) (coord2: coord) : bool =
