@@ -18,24 +18,25 @@ module RegEx =
         let m = Regex.Match(input, pattern)
         if m.Success then Some(List.tail [ for g in m.Groups -> g.Value ])
         else None
+        
+    let regexMove ts pattern =
+        Regex.Matches(ts, pattern) |>
+        Seq.cast<Match> |> 
+        Seq.map 
+            (fun t -> 
+                match t.Value with
+                | Regex pattern [x; y; id; c; p] ->
+                    ((x |> int, y |> int), (id |> uint32, (c |> char, p |> int)))
+                | _ -> failwith "Failed (should never happen)") |>
+        Seq.toList
 
     let parseMove ts cstream =
         let play = @"([-]?[0-9]+[ ])([-]?[0-9]+[ ])([0-9]+)([A-Z]{1})([0-9]+)[ ]?"
+        let change = @"change[ ]?"
         
         debugPrint $"\nCurrent move: {ts}\n\n"
         match ts with
-        | Regex play _ ->
-            let rx = (Regex.Matches(ts, play) |>
-            Seq.cast<Match> |> 
-            Seq.map 
-                (fun t -> 
-                    match t.Value with
-                    | Regex play [x; y; id; c; p] ->
-                        ((x |> int, y |> int), (id |> uint32, (c |> char, p |> int)))
-                    | _ -> failwith "Failed (should never happen)") |>
-            Seq.toList)
-            send cstream (SMPlay rx)
-        //| Regex pass _ -> send cstream SMPass
+        | Regex play _ -> send cstream (SMPlay (regexMove ts play))
 
  module Print =
     let printHand pieces hand = hand |> fold (fun _ x i -> forcePrint (sprintf "%d -> (%A, %d)\n" x (Map.find x pieces) i)) ()
@@ -73,7 +74,7 @@ module State =
         snd (pieces.Item(piece).MinimumElement)    
         
     let sortWordsByValue (words: WordList) (pieces: TileMap) : WordList =
-        words |> List.sortByDescending (fun s -> s |> List.fold (fun a v -> a + (getPieceValue pieces (fst v))) 0) |> List.filter (fun w -> w.Length > 2)
+        words |> List.sortByDescending (fun s -> s |> List.fold (fun a v -> a + (getPieceValue pieces (fst v))) 0) //|> List.filter (fun w -> w.Length > 2)
         
     let handToList (hand: MultiSet<uint32>) : (uint32 * char) list =
         toList hand |> List.fold (fun acc u -> acc @ [(u, char (u + 64u))]) []
@@ -82,7 +83,9 @@ module State =
         List.fold (fun s (_, c) -> s + c.ToString()) "" charList
     
     let layWord (sortedWords: WordList) (pieces: TileMap) (position: CharPos) (isVertical: bool) =
-        debugPrint $"position: ${position},\nisVertical: {isVertical}\n, startPos: {fst position}\n"
+        debugPrint $"position: ${position},\nisVertical: {isVertical},\nstartPos: {fst position},\n word count: {sortedWords.Length}\n"
+        debugPrint "words after filter:\n"
+        List.iter (fun w -> debugPrint $"{charlistToString w}\n") sortedWords
         let firstWord = fst (snd (snd position)) = '*'
         let word = match firstWord with
                    | true -> sortedWords.Head
@@ -102,21 +105,22 @@ module State =
     
     let lookupWords (hand: MultiSet<uint32>) (dict: Dict) (startChar: CharPos) : WordList =
         debugPrint $"wildcard: {contains 0u hand},\nhand: {hand},\nhand string: {charlistToString (handToList hand)},\nhand list {handToList hand},\nstart char: {fst (snd (snd startChar))}\n"
+        let firstWord = match fst (snd (snd startChar)) <> '*' with | true -> [(uint32 (snd (fst startChar)), fst (snd (snd startChar)))] | false -> []
         let rec rackLookup (charList: (uint32 * char) list) (wordCharList: (uint32 * char) list) =
             List.fold (fun acc currChar ->
                     let currWord = match lookup (charlistToString wordCharList) dict with | true -> [wordCharList] | false -> []
-                    debugPrint $"rack; charList: {charList}, wordCharList {charlistToString wordCharList}\n"
-                    acc @ currWord @ rackLookup charList.Tail (wordCharList @ [currChar])
+                    //debugPrint $"rack; charList: {charList}, wordCharList {charlistToString wordCharList}, head: {charList.Head}, currChar: {currChar}\n"
+                    acc @ currWord @ rackLookup (List.filter ((<>) currChar) charList) (wordCharList @ [currChar])
                     ) [] charList
         let wordPermutations = (match contains 0u hand with
                                 | true -> List.fold (fun acc l ->
                                     let currHand = handToList hand |> List.map (fun (i, c) -> if i = 0u then i, (char ((uint32 c)+l)) else i, c)
-                                    acc @ rackLookup currHand []) [] [0u .. 25u]
-                                | false -> rackLookup (handToList hand) []) |> Seq.distinct |> List.ofSeq
-        debugPrint "words:\n"
+                                    acc @ rackLookup (currHand @ firstWord) []) [] [0u .. 25u]
+                                | false -> rackLookup ((handToList hand) @ firstWord) []) |> Seq.distinct |> List.ofSeq
+        debugPrint "words before filter:\n"
         List.iter (fun w -> debugPrint $"{charlistToString w}\n") wordPermutations
         match fst (snd (snd startChar)) <> '*' with
-        | true -> List.filter (fun w -> snd (w.Item(w.Length-1)) = fst (snd (snd startChar))) wordPermutations
+        | true -> List.filter (fun w -> snd (w.Item(0)) = fst (snd (snd startChar))) wordPermutations
         | false -> wordPermutations
 
 module Scrabble =
@@ -128,10 +132,12 @@ module Scrabble =
             // Finds words and their position on the board
             let words    = State.lookupWords st.hand st.dict st.wordPlacement
             let sorted   = State.sortWordsByValue words pieces
-            let layWord  = State.layWord sorted pieces st.wordPlacement st.wordDirection
+            if sorted.Length = 0 then send cstream (SMChange (toList st.hand))
+            else
+                let layWord  = State.layWord sorted pieces st.wordPlacement st.wordDirection
             
-            // Tries to place a word on the board
-            RegEx.parseMove layWord cstream
+                // Tries to place a word on the board
+                RegEx.parseMove layWord cstream
             
             //let input = System.Console.ReadLine()
             //RegEx.parseMove input cstream
@@ -163,7 +169,10 @@ module Scrabble =
                 aux (State.mkState st.board st.dict st.playerNumber st.numberOfPlayer st.hand st.boardState st.wordPlacement st.wordDirection)
             //| RCM (CMForfeit playerId) ->
             //| RCM (CMChange (playerId, numberOfTiles)) ->  
-            //| RCM (CMChangeSuccess newTiles) ->
+            | RCM (CMChangeSuccess newPieces) ->
+                let addPiece = List.fold (fun acc elm -> MultiSet.add (fst elm) (snd elm) acc) empty newPieces
+                let st' = State.mkState st.board st.dict st.playerNumber st.numberOfPlayer addPiece st.boardState st.wordPlacement st.wordDirection
+                aux st'
             //| RCM (CMTimeout playerId) ->
             | RCM (CMGameOver _) -> ()
             | RCM a -> failwith (sprintf "not implmented: %A" a)
