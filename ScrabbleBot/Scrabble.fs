@@ -73,10 +73,15 @@ module State =
         
     let isWordLayable (words: LayedWordsList) (pos: coord) (isVertical: bool) : bool =
         let i = match isVertical with | true -> (fst pos+1, snd pos) | false -> (fst pos, snd pos+1)
-        not (List.exists (fun (c, (v, _)) -> match v with | true -> (fst c+1, snd c) = i | false -> (fst c, snd c+1) = i) words)
+        let pos = not (List.exists (fun (c, _) -> (fst c, snd c+1) = i) words)
+        debugPrint $"layable: {pos}\n"
+        pos
     
-    let layPosition (words: LayedWordsList) : CharPos =
-        match List.tryFind (fun w -> isWordLayable words (fst w) (fst (snd w))) words with
+    let layPosition (board: Map<coord, (char * int)>) (words: LayedWordsList) : CharPos =
+        match List.tryFind (fun (p, (b, _)) ->
+            let i = match b with | true -> (fst p+1, snd p) | false -> (fst p, snd p+1)
+            not (board.Keys.Contains(i))
+            ) words with
         | Some word -> let coordinate = fst word
                        let isVertical = not (fst (snd word))
                        let character  = (snd (snd word)).Chars(0)
@@ -89,13 +94,21 @@ module State =
         | None -> None
     
     let layWord (words: LayedWordsList) (sortedWords: WordList) (pieces: TileMap) (position: CharPos) =
+        debugPrint $"position: ${position}\n"
+        debugPrint $"words:\n"
+        List.iter (fun w -> debugPrint $"{w}\n") sortedWords
         let word = match words.IsEmpty with | true -> sortedWords.Head.ToCharArray() |> List.ofArray | false -> (sortedWords.Head.ToCharArray() |> List.ofArray).Tail
         let isVertical = match position with | Some pos -> fst (snd pos) | None -> true
+        debugPrint $"isVertical: {isVertical}\n"
         let startPos = match position with | Some pos -> fst pos | None -> (0,0)
-        let mutable i = match isVertical with | true -> (fst startPos, -1) | false -> (-1, snd startPos)
+        let mutable i = match isVertical with
+        | true -> if words.IsEmpty then startPos else (fst startPos, snd startPos+1)
+        | false -> if words.IsEmpty then startPos else (fst startPos+1, snd startPos)
+        debugPrint $"startPos: {startPos}, i: {i}\n"
         List.fold (fun s v ->
+            let lay = s + $"{fst i} {snd i} {int v-64}{v}{getPieceValue pieces v} "
             i <- match isVertical with | true -> (fst i, snd i+1) | false -> (fst i+1, snd i)
-            s + $"{fst i} {snd i} {int v-64}{v}{getPieceValue pieces v} "
+            lay
             ) "" word
     
     let getPieceData (pieces: TileMap) =
@@ -106,18 +119,19 @@ module State =
     
     let lookupWords (hand: Word) (dict: Dict) (specialChars: CharPos) : WordList =
         let charIndex = toCharIndex specialChars
+        let specChars = match charIndex with | Some char -> [snd char] | None -> []
         let rec rackLookup l w d =
             List.fold (fun s v ->
                     let wordn = match lookup w d with | true -> [w] | false -> []
                     s @ wordn @ (rackLookup (List.filter ((<>) v) l) (w+v.ToString()) d)
                     ) [] l
-        let words = rackLookup (hand @ [' ']) "" dict |> Seq.distinct |> List.ofSeq
+        let words = rackLookup (hand @ specChars @ [' ']) "" dict |> Seq.distinct |> List.ofSeq
         match charIndex with
         | Some charIndex -> List.filter (fun w -> w.Chars(fst charIndex) = snd charIndex) words
         | None -> words
     
     let handToList (hand: MultiSet<uint32>) (pieces: TileMap) : Word =
-        toList hand |> List.fold (fun s v -> s @ [(getPieceData pieces).Item(v)]) []
+        toList hand |> List.fold (fun s v -> debugPrint $"hand: {v}\n"; s @ [(getPieceData pieces).Item(v)]) []
         
     let isWordVertical (coord1: coord) (coord2: coord) : bool =
         (snd coord1) <> (snd coord2)
@@ -129,10 +143,11 @@ module State =
 module Scrabble =
     let playGame cstream pieces (st : State.state) =
         let rec aux (st : State.state) =
+            debugPrint $"\n------------------------------------------------------------\n\n"
             Print.printHand pieces st.hand
             
             // Finds words and their position on the board
-            let position = State.layPosition st.layedWords
+            let position = State.layPosition st.boardState st.layedWords
             let letters  = State.handToList st.hand pieces
             let words    = State.lookupWords letters st.dict position
             let sorted   = State.sortWordsByValue words pieces
