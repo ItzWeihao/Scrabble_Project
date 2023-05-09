@@ -82,37 +82,39 @@ module State =
         List.fold (fun s (_, c) -> s + c.ToString()) "" charList
     
     let layWord (sortedWords: WordList) (pieces: TileMap) (position: CharPos) (isVertical: bool) =
-        debugPrint $"position: ${position}\n"
-        debugPrint "words:\n"
-        List.iter (fun w -> debugPrint $"{charlistToString w}\n") sortedWords
-        let firstWord = fst (snd position) <> 0u
+        debugPrint $"position: ${position},\nisVertical: {isVertical}\n, startPos: {fst position}\n"
+        let firstWord = fst (snd (snd position)) = '*'
         let word = match firstWord with
                    | true -> sortedWords.Head
                    | false -> sortedWords.Head.Tail
-        debugPrint $"isVertical: {isVertical}\n"
         let startPos = fst position
         let mutable i = match isVertical with
                         | true -> if firstWord then startPos else (fst startPos, snd startPos+1)
                         | false -> if firstWord then startPos else (fst startPos+1, snd startPos)
-        debugPrint $"startPos: {startPos}, i: {i}\n"
-        List.fold (fun s (v, c) ->
+        debugPrint $"i: {i}\n"
+        let layStr = (List.fold (fun s (v, c) ->
             let lay = s + $"{fst i} {snd i} {v}{c}{getPieceValue pieces v} "
             i <- match isVertical with | true -> (fst i, snd i+1) | false -> (fst i+1, snd i)
             lay
-            ) "" word
+            ) "" word)
+        debugPrint $"lay string: {layStr}\n"
+        layStr
     
     let lookupWords (hand: MultiSet<uint32>) (dict: Dict) (startChar: CharPos) : WordList =
         debugPrint $"wildcard: {contains 0u hand},\nhand: {hand},\nhand string: {charlistToString (handToList hand)},\nhand list {handToList hand},\nstart char: {fst (snd (snd startChar))}\n"
         let rec rackLookup (charList: (uint32 * char) list) (wordCharList: (uint32 * char) list) =
             List.fold (fun acc currChar ->
                     let currWord = match lookup (charlistToString wordCharList) dict with | true -> [wordCharList] | false -> []
+                    debugPrint $"rack; charList: {charList}, wordCharList {charlistToString wordCharList}\n"
                     acc @ currWord @ rackLookup charList.Tail (wordCharList @ [currChar])
                     ) [] charList
         let wordPermutations = (match contains 0u hand with
                                 | true -> List.fold (fun acc l ->
                                     let currHand = handToList hand |> List.map (fun (i, c) -> if i = 0u then i, (char ((uint32 c)+l)) else i, c)
                                     acc @ rackLookup currHand []) [] [0u .. 25u]
-                                | false -> rackLookup ((handToList hand) @ [(0u,'%')]) []) |> Seq.distinct |> List.ofSeq
+                                | false -> rackLookup (handToList hand) []) |> Seq.distinct |> List.ofSeq
+        debugPrint "words:\n"
+        List.iter (fun w -> debugPrint $"{charlistToString w}\n") wordPermutations
         match fst (snd (snd startChar)) <> '*' with
         | true -> List.filter (fun w -> snd (w.Item(w.Length-1)) = fst (snd (snd startChar))) wordPermutations
         | false -> wordPermutations
@@ -129,7 +131,7 @@ module Scrabble =
             let layWord  = State.layWord sorted pieces st.wordPlacement st.wordDirection
             
             // Tries to place a word on the board
-            //RegEx.parseMove layWord cstream
+            RegEx.parseMove layWord cstream
             
             //let input = System.Console.ReadLine()
             //RegEx.parseMove input cstream
