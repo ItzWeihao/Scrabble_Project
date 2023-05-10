@@ -32,11 +32,12 @@ module RegEx =
 
     let parseMove ts cstream =
         let play = @"([-]?[0-9]+[ ])([-]?[0-9]+[ ])([0-9]+)([A-Z]{1})([0-9]+)[ ]?"
-        let change = @"change[ ]?"
+        let pass = @"pass[ ]?"
         
         debugPrint $"\nCurrent move: {ts}\n\n"
         match ts with
         | Regex play _ -> send cstream (SMPlay (regexMove ts play))
+        | Regex pass _ -> send cstream SMPass
 
  module Print =
     let printHand pieces hand = hand |> fold (fun _ x i -> forcePrint (sprintf "%d -> (%A, %d)\n" x (Map.find x pieces) i)) ()
@@ -51,6 +52,7 @@ module State =
         boardState      : Map<coord, (char * int)>
         wordPlacement   : coord * (uint32 * (char * int))
         wordDirection   : bool
+        tilesPlaced     : int
     }
     type TileMap = Map<uint32, tile>
     type Word = char list
@@ -59,7 +61,7 @@ module State =
     type LayedWordsList = (coord * (bool * string)) list
     type CharIndex = (int * char) Option
     
-    let mkState board dict playerNumber numberOfPlayer hand bState wPlace wDir = {
+    let mkState board dict playerNumber numberOfPlayer hand bState wPlace wDir tilesPlaced = {
         board = board
         dict = dict
         playerNumber = playerNumber
@@ -68,6 +70,7 @@ module State =
         boardState = bState
         wordPlacement = wPlace
         wordDirection = wDir
+        tilesPlaced = tilesPlaced
     }
     
     let getPieceValue (pieces: TileMap) (piece: uint32) : int =
@@ -85,11 +88,12 @@ module State =
     let layWord (sortedWords: WordList) (pieces: TileMap) (position: CharPos) (isVertical: bool) =
         debugPrint $"position: ${position},\nisVertical: {isVertical},\nstartPos: {fst position},\n word count: {sortedWords.Length}\n"
         debugPrint "words after filter:\n"
-        List.iter (fun w -> debugPrint $"{charlistToString w}\n") sortedWords
+        List.iter (fun w -> printf "%A\n" w) sortedWords
         let firstWord = fst (snd (snd position)) = '*'
         let word = match firstWord with
                    | true -> sortedWords.Head
                    | false -> sortedWords.Head.Tail
+        debugPrint $"word char list: {word}\n"
         let startPos = fst position
         let mutable i = match isVertical with
                         | true -> if firstWord then startPos else (fst startPos, snd startPos+1)
@@ -105,7 +109,7 @@ module State =
     
     let lookupWords (hand: MultiSet<uint32>) (dict: Dict) (startChar: CharPos) : WordList =
         debugPrint $"wildcard: {contains 0u hand},\nhand: {hand},\nhand string: {charlistToString (handToList hand)},\nhand list {handToList hand},\nstart char: {fst (snd (snd startChar))}\n"
-        let firstWord = match fst (snd (snd startChar)) <> '*' with | true -> [(uint32 (snd (fst startChar)), fst (snd (snd startChar)))] | false -> []
+        let firstWord = match fst (snd (snd startChar)) <> '*' with | true -> [fst (snd startChar), fst (snd (snd startChar))] | false -> []
         let rec rackLookup (charList: (uint32 * char) list) (wordCharList: (uint32 * char) list) =
             List.fold (fun acc currChar ->
                     let currWord = match lookup (charlistToString wordCharList) dict with | true -> [wordCharList] | false -> []
@@ -120,7 +124,7 @@ module State =
         debugPrint "words before filter:\n"
         List.iter (fun w -> debugPrint $"{charlistToString w}\n") wordPermutations
         match fst (snd (snd startChar)) <> '*' with
-        | true -> List.filter (fun w -> snd (w.Item(0)) = fst (snd (snd startChar))) wordPermutations
+        | true -> List.filter (fun w -> snd (w.Item(0)) = fst (snd (snd startChar)) && (fst (w.Item(0))) <> 0u) wordPermutations
         | false -> wordPermutations
 
 module Scrabble =
@@ -132,25 +136,21 @@ module Scrabble =
             // Finds words and their position on the board
             let words    = State.lookupWords st.hand st.dict st.wordPlacement
             let sorted   = State.sortWordsByValue words pieces
-            if sorted.Length = 0 then send cstream (SMChange (toList st.hand))
+            
+            if (st.tilesPlaced + (toList st.hand).Length) = 104 then RegEx.parseMove "pass " cstream
+            elif sorted.Length = 0 then send cstream (SMChange (toList st.hand |> Seq.take (int (toList st.hand |> List.length)) |> Seq.toList))
             else
                 let layWord  = State.layWord sorted pieces st.wordPlacement st.wordDirection
-            
+                
                 // Tries to place a word on the board
                 RegEx.parseMove layWord cstream
-            
-            //let input = System.Console.ReadLine()
-            //RegEx.parseMove input cstream
-            
-            //debugPrint $"Player %d{st.playerNumber} -> Server:\n%A{move}\n"
-            //debugPrint $"Player %d{st.playerNumber} <- Server:\n%A{move}\n"
             
             match (recv cstream) with
             | RCM (CMPlayed (playerId, move, points)) ->
                 (* Successful play by other player. Update your state *)
                 let newBoard = List.fold (fun acc (coord, (_, (char, points))) -> Map.add coord (char, points) acc) st.boardState move
                 let addWord = move.Item(move.Length-1)
-                let st' = State.mkState st.board st.dict st.playerNumber st.numberOfPlayer st.hand newBoard addWord st.wordDirection
+                let st' = State.mkState st.board st.dict st.playerNumber st.numberOfPlayer st.hand newBoard addWord st.wordDirection st.tilesPlaced
                 aux st'
             | RCM (CMPlaySuccess (move, points, newPieces)) ->
                 (* Successful play by you. Update your state (remove old tiles, add the new ones, change turn, etc) *)
@@ -159,19 +159,20 @@ module Scrabble =
                 let newBoard = List.fold (fun acc (coord, (_, (char, points))) -> Map.add coord (char, points) acc) st.boardState move
                 let addWord = move.Item(move.Length-1)
                 let wordDir = not st.wordDirection
-                let st' = State.mkState st.board st.dict st.playerNumber st.numberOfPlayer addPiece newBoard addWord wordDir
+                let totalTilesPlaced = st.tilesPlaced + move.Length
+                let st' = State.mkState st.board st.dict st.playerNumber st.numberOfPlayer addPiece newBoard addWord wordDir totalTilesPlaced
                 aux st'
             | RCM (CMPlayFailed (playerId, move)) ->
                 (* Failed play. Update your state *)
                 let newBoard = List.fold (fun acc (coord, (_, (char, points))) -> Map.add coord (char, points) acc) st.boardState move
-                aux (State.mkState st.board st.dict st.playerNumber st.numberOfPlayer st.hand newBoard st.wordPlacement st.wordDirection)
+                aux (State.mkState st.board st.dict st.playerNumber st.numberOfPlayer st.hand newBoard st.wordPlacement st.wordDirection st.tilesPlaced)
             | RCM (CMPassed playerId) ->
-                aux (State.mkState st.board st.dict st.playerNumber st.numberOfPlayer st.hand st.boardState st.wordPlacement st.wordDirection)
+                aux (State.mkState st.board st.dict st.playerNumber st.numberOfPlayer st.hand st.boardState st.wordPlacement st.wordDirection st.tilesPlaced)
             //| RCM (CMForfeit playerId) ->
-            //| RCM (CMChange (playerId, numberOfTiles)) ->  
+            //| RCM (CMChange (playerId, numberOfTiles)) ->
             | RCM (CMChangeSuccess newPieces) ->
                 let addPiece = List.fold (fun acc elm -> MultiSet.add (fst elm) (snd elm) acc) empty newPieces
-                let st' = State.mkState st.board st.dict st.playerNumber st.numberOfPlayer addPiece st.boardState st.wordPlacement st.wordDirection
+                let st' = State.mkState st.board st.dict st.playerNumber st.numberOfPlayer addPiece st.boardState st.wordPlacement st.wordDirection st.tilesPlaced
                 aux st'
             //| RCM (CMTimeout playerId) ->
             | RCM (CMGameOver _) -> ()
@@ -202,4 +203,4 @@ module Scrabble =
         let handSet = List.fold (fun acc (x, k) -> MultiSet.add x k acc) empty hand
         let wordPlacement = ((0,0), (0u, ('*', 0)))
         
-        fun () -> playGame cstream tiles (State.mkState boardP dict playerNumber numPlayers handSet Map.empty wordPlacement true)
+        fun () -> playGame cstream tiles (State.mkState boardP dict playerNumber numPlayers handSet Map.empty wordPlacement true 0)
