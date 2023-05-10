@@ -20,7 +20,7 @@ let spawnMultiples name dict bot =
 
 [<EntryPoint>]
 let main argv =
-    DebugPrint.toggleDebugPrint true // Change to false to supress debug output
+    DebugPrint.toggleDebugPrint false // Change to false to suppress debug output
 
     System.Console.BackgroundColor <- System.ConsoleColor.White
     System.Console.ForegroundColor <- System.ConsoleColor.Black
